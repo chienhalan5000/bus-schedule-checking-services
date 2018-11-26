@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Places Search Box</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      .pac-card {
+        margin: 10px 10px 0 0;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+        font-family: Roboto;
+      }
+
+      #pac-container {
+        padding-bottom: 12px;
+        margin-right: 12px;
+      }
+
+      .pac-controls {
+        display: inline-block;
+        padding: 5px 11px;
+      }
+
+      .pac-controls label {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 300;
+      }
+
+      #origin {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+      }
+
+      #origin:focus {
+        border-color: #4d90fe;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #target {
+        width: 345px;
+      }
+    </style>
+  </head>
+  <body>
+    <input id="origin" class="controls" type="text" placeholder="Origin">
+	<input id="destination" class="controls" type="text" placeholder="Destination">
+    <div id="map"></div>
+    <script>
+      // This example adds a search box to a map, using the Google Place Autocomplete
+      // feature. People can enter geographical searches. The search box will return a
+      // pick list containing a mix of places and predicted search terms.
+
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+	  var map;
+		
+	  var originMarkers = [];
+	  var destinationMarkers = [];
+	  var bounds;
+	  var originPlaces = [];
+	  var destinationPlaces = [];
+	  
+	  var directionsService;
+      var directionsDisplay;
+	  
+	  
+      function initAutocomplete() {
+		map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 21.028511, lng: 105.804817},
+          zoom: 13,
+          mapTypeId: 'roadmap'
+        });
+		bounds = new google.maps.LatLngBounds();
+		directionsService = new google.maps.DirectionsService;
+        directionsDisplay = new google.maps.DirectionsRenderer;
+		directionsDisplay.setMap(map);
+
+	  
+        // Create the starting location search box and link it to the UI element.
+        var inputOrigin = document.getElementById('origin');
+        var originSearchBox = new google.maps.places.SearchBox(inputOrigin);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(inputOrigin);
+		
+		// Create the destination search box and link it to the UI element.
+		var inputDestination = document.getElementById('destination');
+		var destinationSearchBox = new google.maps.places.SearchBox(inputDestination);
+		map.controls[google.maps.ControlPosition.TOP_LEFT].push(inputDestination);
+
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener('bounds_changed', function() {
+          originSearchBox.setBounds(map.getBounds());
+		  destinationSearchBox.setBounds(map.getBounds());
+        });
+		
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        originSearchBox.addListener('places_changed', function() {
+          originPlaces = originSearchBox.getPlaces();
+		  console.log(originPlaces[0].id);
+
+          if (originPlaces.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          originMarkers.forEach(function(marker) {
+            marker.setMap(null);
+			console.log('clearing changes');
+          });
+          originMarkers = [];
+
+          // For each place, get the icon, name and location.
+          originPlaces.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each place.
+            originMarkers.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: place.name,
+              position: place.geometry.location
+            }));
+			
+			var latitude = place.geometry.location.lat();
+			var longitude = place.geometry.location.lng();
+			console.log('Location of ' + place.name + ': ' + latitude + ', ' + longitude);
+          });
+			fitmap();
+			calculateAndDisplayRoute(directionsService,directionsDisplay);
+		});
+		
+		destinationSearchBox.addListener('places_changed', function() {
+          destinationPlaces = destinationSearchBox.getPlaces();
+
+          if (destinationPlaces.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          destinationMarkers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          destinationMarkers = [];
+
+          // For each place, get the icon, name and location.
+          destinationPlaces.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(100, 100),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each place.
+            destinationMarkers.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: place.name,
+              position: place.geometry.location
+            }));
+			
+			var latitude = place.geometry.location.lat();
+			var longitude = place.geometry.location.lng();
+			console.log('Location of ' + place.name + ': ' + latitude + ', ' + longitude);
+			});
+		  	fitmap();
+			calculateAndDisplayRoute(directionsService,directionsDisplay);
+        });
+		
+		function fitmap() {
+			bounds = new google.maps.LatLngBounds();
+			console.log(originPlaces.length);
+			console.log(destinationPlaces.length);
+			if (originPlaces!=null)
+			originPlaces.forEach(function(place) {
+				if (!place.geometry) {
+					console.log("Returned place contains no geometry");
+					return;
+				}
+				if (place.geometry.viewport) {
+					// Only geocodes have viewport.
+					bounds.union(place.geometry.viewport);
+				} else {
+					bounds.extend(place.geometry.location);
+				}
+			});
+			
+			if (destinationPlaces!=null)
+			destinationPlaces.forEach(function(place) {
+				if (!place.geometry) {
+					console.log("Returned place contains no geometry");
+					return;
+				}
+				if (place.geometry.viewport) {
+					// Only geocodes have viewport.
+					bounds.union(place.geometry.viewport);
+				} else {
+					bounds.extend(place.geometry.location);
+				}
+			});
+			
+			map.fitBounds(bounds);
+		}
+      }
+	  
+	  function calculateAndDisplayRoute(directionsService, directionsDisplay) {
+	    if (originPlaces.length==0) {console.log('No starting location'); return;}
+		if (destinationPlaces.length==0) {console.log('No destination'); return;}
+		
+        directionsService.route({
+          origin: originPlaces[0].geometry.location,
+          destination: destinationPlaces[0].geometry.location,
+          travelMode: 'DRIVING',
+		  optimizeWaypoints: true,
+		  provideRouteAlternatives: true,
+		    unitSystem: google.maps.UnitSystem.METRIC
+        }, function(response, status) {
+          if (status === 'OK') {
+		     
+            for (var i = 0, len = response.routes.length; i < len; i++) {
+                new google.maps.DirectionsRenderer({
+                    map: map,
+                    directions: response,
+                    routeIndex: i,
+				    polylineOptions: {
+						strokeColor: "red"
+					},
+					                suppressInfoWindows: false
+                });
+            }
+
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+      }
+
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBlHt3MCFhoxmt34_LFvx6srKcVtOwH94c&libraries=places&callback=initAutocomplete"
+         async defer></script>
+	
+  </body>
+</html>
