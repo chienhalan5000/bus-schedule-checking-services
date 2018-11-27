@@ -20,10 +20,10 @@
     $obj = json_decode($result, TRUE);
 
     foreach($obj as $key => $value) {
-        $sql = "INSERT INTO bus_stops (StopId, Code, Name, StopType,Zone ,Ward ,AddressNo ,Street ,SupportDisability ,Status ,Lng ,Lat)
+        $sql = "INSERT INTO bus_stops (StopId, Code, Name, StopType,Zone , Ward, AddressNo,Street ,SupportDisability ,Status ,Lng ,Lat, Search, Routes)
         VALUES (".$value['StopId'].",'".$value['Code']."','".$value['Name']."','".$value['StopType']."','".$value['Zone']."','".$value['Ward']."','
         ".$value['AddressNo']."','".$value['Street']."','".$value['SupportDisability']."','".$value['Status']."',".$value['Lng'].",
-        ".$value['Lat'].")";
+        ".$value['Lat'].",'".$value['Search']."','".$value['Routes']."')";
 
         mysqli_query($CONNECT_SQL, $sql);
     }
