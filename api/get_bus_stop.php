@@ -1,4 +1,7 @@
 <?php
+/**
+ * Argument: StopId id of bus stop
+ */
 include('../config.php');
 
 $status = false;

@@ -1,4 +1,7 @@
 <?php
+/**
+ * Argument: Route route
+ */
 include('../config.php');
 
 $status = false;
