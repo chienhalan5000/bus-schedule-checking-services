@@ -28,11 +28,9 @@
 
             <div id="bus" class="widget-directions-searchbox-container" style="display: none">
               <div class="searchbox">
-                  <input id="bus_number" class="controls tactile-searchbox-input" type="text" placeholder="Bus number">
+                  <input id="location_bus" class="controls tactile-searchbox-input" type="text" placeholder="Your location">
               </div>
             </div>
-
-
           </div>
         </div>
       </div>
@@ -51,6 +49,7 @@
       }
     </style>
   </head>
+  
   <body>
     <input id="origin" class="controls" type="text" placeholder="Origin">
 	<input id="destination" class="controls" type="text" placeholder="Destination">
@@ -107,6 +106,23 @@
         });
 		bounds = new google.maps.LatLngBounds();
 		
+      // Create the starting location search box and link it to the UI element.
+      var inputOrigin = document.getElementById('origin');
+      var originSearchBox = new google.maps.places.SearchBox(inputOrigin);
+      map.controls.push(inputOrigin);
+
+      // Create the destination search box and link it to the UI element.
+      var inputDestination = document.getElementById('destination');
+      var destinationSearchBox = new google.maps.places.SearchBox(inputDestination);
+      map.controls.push(inputDestination);
+	  
+	  // Create the search box for bus schedule
+	  var inputLocation = document.getElementById('location_bus');
+	  var locationSearchBox = new google.maps.places.SearchBox(inputLocation);
+	  map.controls.push(inputLocation);
+	  
+		
+		
 		var lineSymbol = {
 			path: google.maps.SymbolPath.CIRCLE,
 			fillOpacity: 1,
@@ -131,16 +147,7 @@
 			}],
 		});
 
-      // Create the starting location search box and link it to the UI element.
-      var inputOrigin = document.getElementById('origin');
-      var originSearchBox = new google.maps.places.SearchBox(inputOrigin);
-      map.controls.push(inputOrigin);
-
-  
-      // Create the destination search box and link it to the UI element.
-      var inputDestination = document.getElementById('destination');
-      var destinationSearchBox = new google.maps.places.SearchBox(inputDestination);
-      map.controls.push(inputDestination);
+		
 		var rendererOption1 = {
 			map: map,
 			suppressMarkers: false,
@@ -152,8 +159,6 @@
             polylineOptions: polylineOptions2
 		}
 		
-
-		
 		directionsService = new google.maps.DirectionsService;
         directionsDisplay1 = new google.maps.DirectionsRenderer(rendererOption1)
 		directionsDisplay2 = new google.maps.DirectionsRenderer(rendererOption2);
@@ -162,16 +167,6 @@
 		directionsDisplay2.setMap(map);
 		directionsDisplay3.setMap(map);
 			
-        // Create the starting location search box and link it to the UI element.
-        var inputOrigin = document.getElementById('origin');
-        var originSearchBox = new google.maps.places.SearchBox(inputOrigin);
-        map.controls.push(inputOrigin);
-		
-		// Create the destination search box and link it to the UI element.
-		var inputDestination = document.getElementById('destination');
-		var destinationSearchBox = new google.maps.places.SearchBox(inputDestination);
-		map.controls.push(inputDestination);
-
         // Bias the SearchBox results towards current map's viewport.
         map.addListener('bounds_changed', function() {
           originSearchBox.setBounds(map.getBounds());
@@ -267,6 +262,51 @@
 			fitmap([destinationPlaces[0].geometry.location]);
 			calculateAndDisplayRoute(directionsService,directionsDisplay1,directionsDisplay2,originPlaces[0],destinationPlaces[0]);
         });
+		
+		
+		
+		//***************************			LOCATION SEARCH BOX FOR BUS TIME SCHEDULE 		****************************
+		var markers = []
+		locationSearchBox.addListener('places_changed', function() {
+			var places = locationSearchBox.getPlaces();
+			if (places.length==0) return;
+			
+			markers.forEach(function(marker) {
+				marker.setMap(null);
+			});
+			markers = [];
+			
+			var bounds = new google.maps.LatLngBounds();
+			places.forEach(function(place) {
+				if (!place.geometry) {
+					console.log("Returned place contains no geometry");
+					return;
+				}
+				var icon = {
+					url: place.icon,
+					size: new google.maps.Size(71, 71),
+					origin: new google.maps.Point(0, 0),
+					anchor: new google.maps.Point(17, 34),
+					scaledSize: new google.maps.Size(25, 25)
+				};
+
+				// Create a marker for each place.
+				markers.push(new google.maps.Marker({
+					map: map,
+					icon: icon,
+					title: place.name,
+					position: place.geometry.location
+				}));
+
+				if (place.geometry.viewport) {
+					// Only geocodes have viewport.
+					bounds.union(place.geometry.viewport);
+					} else {
+					bounds.extend(place.geometry.location);
+					}
+				});
+			map.fitBounds(bounds);
+		});
       }	
 	  
 	function fitmap(locations) {
@@ -389,21 +429,25 @@
 			
 			var bestDistance = 1000000000;
 			var bestBusId = 0;
+			var listOfUsableBus = [];
 			for (var key in distToOrigin) {
 				var busId = key;
 				if (!(busId in distToDest)) continue;
+				if (busId.length==0) continue;
+				listOfUsableBus.push(busId);
 				
 				var totalDistance = distToOrigin[key] + distToDest[key];
 				if (totalDistance < bestDistance) {
 					bestDistance = totalDistance;
 					bestBusId = busId;
+					console.log('Bus id = /' + busId + '\'');
 				}
 			}
 			
 			console.log('Best bus id = ' + bestBusId);
 			console.log('bestOriginBs = ' + toString(bestOriginBs[bestBusId]));
 			console.log('bestDestBs = ' + toString(bestDestBs[bestBusId]));
-			return [bestBusId, bestOriginBs[bestBusId], bestDestBs[bestBusId]];
+			return [bestBusId, bestOriginBs[bestBusId], bestDestBs[bestBusId], listOfUsableBus];
 	  }
 	  
 	  
@@ -419,6 +463,8 @@
 		var busId = temp[0];
 		var originBs = temp[1];
 		var destBs = temp[2];
+		var listOfUsableBus = temp[3];
+		console.log('Usable bus: ' + listOfUsableBus);
 		
 		var originBsLocation = {lat: originBs.Lat, lng: originBs.Lng};
 		var destBsLocation = {lat: destBs.Lat, lng: destBs.Lng};
@@ -426,7 +472,10 @@
 		var requestTotalPath = {
 			origin: origin.geometry.location,
 			destination: destination.geometry.location,
-			travelMode: 'WALKING',
+			travelMode: 'TRANSIT',
+			transitOptions: {
+				modes: ['BUS']
+			},
 			provideRouteAlternatives: true,
 			unitSystem: google.maps.UnitSystem.METRIC
 		}
@@ -551,6 +600,7 @@
 	function getBusNumberInfoWindow(busNumber,location,type) {
 		var point = location;
 		var content;
+		console.log('Bus number = ' + busNumber);
 		if (type==1) content = 'Take bus number ' + busNumber;
 		else content = 'Get off the bus';
 		return new google.maps.InfoWindow({
