@@ -3,95 +3,40 @@
   <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <title>Places Search Box</title>
-    <style>
-      /* Always set the map height explicitly to define the size of the div
-       * element that contains the map. */
-      #map {
-        height: 100%;
-      }
-      /* Optional: Makes the sample page fill the window. */
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
-      #description {
-        font-family: Roboto;
-        font-size: 15px;
-        font-weight: 300;
-      }
-
-      #infowindow-content .title {
-        font-weight: bold;
-      }
-
-      #infowindow-content {
-        display: none;
-      }
-
-      #map #infowindow-content {
-        display: inline;
-      }
-
-      .pac-card {
-        margin: 10px 10px 0 0;
-        border-radius: 2px 0 0 2px;
-        box-sizing: border-box;
-        -moz-box-sizing: border-box;
-        outline: none;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        background-color: #fff;
-        font-family: Roboto;
-      }
-
-      #pac-container {
-        padding-bottom: 12px;
-        margin-right: 12px;
-      }
-
-      .pac-controls {
-        display: inline-block;
-        padding: 5px 11px;
-      }
-
-      .pac-controls label {
-        font-family: Roboto;
-        font-size: 13px;
-        font-weight: 300;
-      }
-
-      #origin {
-        background-color: #fff;
-        font-family: Roboto;
-        font-size: 15px;
-        font-weight: 300;
-        margin-left: 12px;
-        padding: 0 11px 0 13px;
-        text-overflow: ellipsis;
-        width: 400px;
-      }
-
-      #origin:focus {
-        border-color: #4d90fe;
-      }
-
-      #title {
-        color: #fff;
-        background-color: #4d90fe;
-        font-size: 25px;
-        font-weight: 500;
-        padding: 6px 12px;
-      }
-      #target {
-        width: 345px;
-      }
-    </style>
+    <title>Bus Map</title>
+    <link rel="stylesheet" href="./asset/style.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="./bootstrap-3.3.7/css/bootstrap.css">
   </head>
-  <body>
-    <div style="background-color: aqua" width="30%"></div>
-    <input id="origin" class="controls" type="text" placeholder="Origin">
-	<input id="destination" class="controls" type="text" placeholder="Destination">
+    <body>
+    <div class="navication" style="font-family: 'Roboto', sans-serif;font-size: 13px">
+      <div class="top">
+        <div class="widget-directions-travel-mode-switcher">
+          <img width="24px" height="24px" src="./asset/image/direction.png" alt="Direction" class="marign-img" onclick="Direction()">
+          <img width="24px" height="24px" src="./asset/image/bus.png" alt="Bus" class="marign-img" onclick="Bus()">
+        </div>
+        <div class="widget-directions-waypoints">
+          <div>
+            <div id="direction" class="widget-directions-searchbox-container">
+              <div class="searchbox">
+                  <input id="origin" class="controls tactile-searchbox-input" type="text" placeholder="Origin">
+              </div>
+              <div class="searchbox">
+                  <input id="destination" class="controls tactile-searchbox-input" type="text" placeholder="Destination">
+              </div>
+            </div>
+
+            <div id="bus" class="widget-directions-searchbox-container" style="display: none">
+              <div class="searchbox">
+                  <input id="bus_number" class="controls tactile-searchbox-input" type="text" placeholder="Bus number">
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      
+    </div>
     <div id="map"></div>
 	
 	
@@ -113,7 +58,16 @@
 	  var destinationPlaces = [];
 	  
 	  var directionsService;
-      var directionsDisplay;
+    var directionsDisplay;
+    function Bus() {
+      $('#direction').css({'display':'none'});
+      $('#bus').css({'display':'block'});
+    }
+
+    function Direction() {
+      $('#bus').css({'display':'none'});
+      $('#direction').css({'display':'block'});
+    }
 	  
 	  
       function initMap() {
@@ -128,15 +82,16 @@
 		directionsDisplay.setMap(map);
 
 	  
-        // Create the starting location search box and link it to the UI element.
-        var inputOrigin = document.getElementById('origin');
-        var originSearchBox = new google.maps.places.SearchBox(inputOrigin);
-        map.controls[google.maps.ControlPosition.TOP_LEFT].push(inputOrigin);
-		
-		// Create the destination search box and link it to the UI element.
-		var inputDestination = document.getElementById('destination');
-		var destinationSearchBox = new google.maps.places.SearchBox(inputDestination);
-		map.controls[google.maps.ControlPosition.TOP_LEFT].push(inputDestination);
+      // Create the starting location search box and link it to the UI element.
+      var inputOrigin = document.getElementById('origin');
+      var originSearchBox = new google.maps.places.SearchBox(inputOrigin);
+      map.controls.push(inputOrigin);
+
+  
+      // Create the destination search box and link it to the UI element.
+      var inputDestination = document.getElementById('destination');
+      var destinationSearchBox = new google.maps.places.SearchBox(inputDestination);
+      map.controls.push(inputDestination);
 
         // Bias the SearchBox results towards current map's viewport.
         map.addListener('bounds_changed', function() {
@@ -363,6 +318,8 @@
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBlHt3MCFhoxmt34_LFvx6srKcVtOwH94c&libraries=places&callback=initMap"
          async defer></script>
-	
+  
+    <script type="text/javascript" src="./asset/jquery-3.3.1.min.js" ></script>
+    <script type="text/javascript" src="./asset/functions.js" ></script>
   </body>
 </html>

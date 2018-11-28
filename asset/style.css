@@ -1,0 +1,153 @@
+
+/* Always set the map height explicitly to define the size of the div
+* element that contains the map. */
+#map {
+height: 100%;
+}
+/* Optional: Makes the sample page fill the window. */
+html, body {
+height: 100%;
+margin: 0;
+padding: 0;
+}
+#description {
+font-family: Roboto;
+font-size: 15px;
+font-weight: 300;
+}
+
+#infowindow-content .title {
+font-weight: bold;
+}
+
+#infowindow-content {
+display: none;
+}
+
+#map #infowindow-content {
+display: inline;
+}
+
+.pac-card {
+margin: 10px 10px 0 0;
+border-radius: 2px 0 0 2px;
+box-sizing: border-box;
+-moz-box-sizing: border-box;
+outline: none;
+box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+background-color: #fff;
+font-family: Roboto;
+}
+
+#pac-container {
+padding-bottom: 12px;
+margin-right: 12px;
+}
+
+.pac-controls {
+display: inline-block;
+padding: 5px 11px;
+}
+
+.pac-controls label {
+font-family: Roboto;
+font-size: 13px;
+font-weight: 300;
+}
+
+/* #origin {
+background-color: #fff;
+font-family: Roboto;
+font-size: 15px;
+font-weight: 300;
+margin-left: 12px;
+padding: 0 11px 0 13px;
+text-overflow: ellipsis;
+width: 400px;
+} */
+
+/* #origin:focus {
+border-color: #4d90fe;
+} */
+
+#title {
+color: #fff;
+background-color: #4d90fe;
+font-size: 25px;
+font-weight: 500;
+padding: 6px 12px;
+}
+#target {
+width: 345px;
+}
+
+.navication {
+    width: 25%;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 999;
+    background-color: white;
+}
+
+.top {
+    background-color: #4285F4 !important;
+    height: 25%;
+}
+
+.widget-directions-waypoints {
+    position: relative;
+    padding-bottom: 24px;
+    z-index: 100;
+}
+
+.widget-directions-searchbox-container {
+    height: 100%;
+    overflow: hidden;
+}
+
+.widget-directions-searchbox-container .searchbox {
+    background-clip: padding-box;
+    width: auto;
+    border: none;
+    position: relative;
+    outline: none;
+    margin: 0;
+    transition-property: none;
+    /* height: 38px; */
+    padding: 12px 32px 4px 32px;
+}
+
+.tactile-searchbox-input {
+    color: rgba(255,255,255,0.87);
+    font-size: 13px;
+    margin: 0 !important;
+    padding: 0 !important;
+    outline: 0;
+    width: 100%;
+    height: 24px !important;
+    line-height: 24px;
+    vertical-align: top;
+    transition-property: color;
+    transition-duration: 0.3s;
+    background-color: inherit;
+    border: none;
+    border-bottom: 1px solid #97bcf9;
+}
+.tactile-searchbox-input::placeholder{
+    color: rgba(255,255,255,0.87);
+    opacity: 0.5;
+    
+}
+
+.widget-directions-travel-mode-switcher {
+    background-color: transparent;
+    height: 48px;
+    padding-left: 56px;
+    padding-top: 10px;
+}
+
+.marign-img {
+    margin: 12px 9px 11px 9px;
+}
