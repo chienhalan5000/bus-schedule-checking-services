@@ -311,17 +311,31 @@
 			
 			// thay đoạn này = get bus stop API từ input 4 điểm
 			// var url = 'http://api.openfpt.vn/fbusinfo/businfo/getstopsinbounds/' + topLng + '/' + topLat + '/' + botLng + '/' + botLat;
-			xmlhttp = new XMLHttpRequest();
-			var url = 'https://cors-anywhere.herokuapp.com/http://api.openfpt.vn/fbusinfo/businfo/getstopsinbounds/' + topLng + '/' + topLat + '/' + botLng + '/' + botLat;
+			var xmlhttp = new XMLHttpRequest();
+			var url = 'http://api.openfpt.vn/fbusinfo/businfo/getstopsinbounds/' + topLng + '/' + topLat + '/' + botLng + '/' + botLat;
 			xmlhttp.onreadystatechange = function() {
-				var response = this.responseText;
+				var response = xmlhttp.responseText;
 				var array = JSON.parse(response);
-				console.log("Array length = " + array.length);
+				console.log("Array length = " + array);
 				return array;
 			}
 			xmlhttp.open("GET",url);			
 			xmlhttp.setRequestHeader("api-key","28ee4e2910b1472a94538e465070f3b3");
 			xmlhttp.send();
+
+      /**
+      * Ví dụ 1 đoạn để lấy api của t giống y lấy api khác thôi đây là api lấy thông tin bus stop bằng id
+      */
+      // var StopId = 14;
+      // var xmlhttp = new XMLHttpRequest();
+      // var url = '/api/get_bus_stop.php?StopId=' . StopId;
+      // xmlhttp.onreadystatechange = function() {
+			// 	var response = xmlhttp.responseText;
+			// 	var array = JSON.parse(response);
+			// 	console.log(array);
+			// }
+			// xmlhttp.open("GET",url);			
+			// xmlhttp.send();
 	  }
 	  
 	  function findNearestBusStop(location) {
