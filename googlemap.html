@@ -89,9 +89,13 @@
     </style>
   </head>
   <body>
+    <div> This is some text </div>
+	<p> This is another text </p>
     <input id="origin" class="controls" type="text" placeholder="Origin">
 	<input id="destination" class="controls" type="text" placeholder="Destination">
     <div id="map"></div>
+	
+	
     <script>
       // This example adds a search box to a map, using the Google Place Autocomplete
       // feature. People can enter geographical searches. The search box will return a
@@ -113,7 +117,7 @@
       var directionsDisplay;
 	  
 	  
-      function initAutocomplete() {
+      function initMap() {
 		map = new google.maps.Map(document.getElementById('map'), {
           center: {lat: 21.028511, lng: 105.804817},
           zoom: 13,
@@ -185,7 +189,7 @@
 			console.log('Location of ' + place.name + ': ' + latitude + ', ' + longitude);
           });
 			fitmap();
-			calculateAndDisplayRoute(directionsService,directionsDisplay);
+			calculateAndDisplayRoute(directionsService,directionsDisplay,originPlaces[0],destinationPlaces[0]);
 		});
 		
 		destinationSearchBox.addListener('places_changed', function() {
@@ -228,7 +232,7 @@
 			console.log('Location of ' + place.name + ': ' + latitude + ', ' + longitude);
 			});
 		  	fitmap();
-			calculateAndDisplayRoute(directionsService,directionsDisplay);
+			calculateAndDisplayRoute(directionsService,directionsDisplay,originPlaces[0],destinationPlaces[0]);
         });
 		
 		function fitmap() {
@@ -267,41 +271,84 @@
 		}
       }
 	  
-	  function calculateAndDisplayRoute(directionsService, directionsDisplay) {
-	    if (originPlaces.length==0) {console.log('No starting location'); return;}
-		if (destinationPlaces.length==0) {console.log('No destination'); return;}
+	  function calculateAndDisplayRoute(directionsService, directionsDisplay, origin, destination) {
+	    if (origin==null) {console.log('No starting location'); return;}
+		if (destination==null) {console.log('No destination'); return;}
+		findNearestBusStop(originPlaces[0].geometry.location);
+		var request = {
+			origin: origin.geometry.location,
+			destination: destination.geometry.location,
+			travelMode: 'WALKING',
+			provideRouteAlternatives: true,
+			unitSystem: google.maps.UnitSystem.METRIC
+		}
 		
-        directionsService.route({
-          origin: originPlaces[0].geometry.location,
-          destination: destinationPlaces[0].geometry.location,
-          travelMode: 'DRIVING',
-		  optimizeWaypoints: true,
-		  provideRouteAlternatives: true,
-		    unitSystem: google.maps.UnitSystem.METRIC
-        }, function(response, status) {
+        directionsService.route(request, function(response, status) {
           if (status === 'OK') {
-		     
-            for (var i = 0, len = response.routes.length; i < len; i++) {
-                new google.maps.DirectionsRenderer({
+		    routes = response.routes;
+						
+            new google.maps.DirectionsRenderer({
                     map: map,
                     directions: response,
-                    routeIndex: i,
+                    routeIndex: 0,
 				    polylineOptions: {
-						strokeColor: "red"
+						strokeColor: "blue"
 					},
-					                suppressInfoWindows: false
+					suppressInfoWindows: false
                 });
-            }
-
           } else {
             window.alert('Directions request failed due to ' + status);
           }
         });
       }
+	  
+	  function findNearBusStop(location) {
+			var range = 0.046506043;
+			var topLat = location.lat() - range;
+			var topLng = location.lng() - range;
+			var botLat = location.lat() + range;
+			var botLng = location.lng() + range;
+			
+			// thay đoạn này = get bus stop API từ input 4 điểm
+			// var url = 'http://api.openfpt.vn/fbusinfo/businfo/getstopsinbounds/' + topLng + '/' + topLat + '/' + botLng + '/' + botLat;
+			xmlhttp = new XMLHttpRequest();
+			var url = 'https://cors-anywhere.herokuapp.com/http://api.openfpt.vn/fbusinfo/businfo/getstopsinbounds/' + topLng + '/' + topLat + '/' + botLng + '/' + botLat;
+			xmlhttp.onreadystatechange = function() {
+				var response = this.responseText;
+				var array = JSON.parse(response);
+				console.log("Array length = " + array.length);
+				return array;
+			}
+			xmlhttp.open("GET",url);			
+			xmlhttp.setRequestHeader("api-key","28ee4e2910b1472a94538e465070f3b3");
+			xmlhttp.send();
+	  }
+	  
+	  function findNearestBusStop(location) {
+			var busStops = findNearBusStop(location);
+			var minDistance = 1000000000;
+			var nearestStopIndex = 0;
+			
+			for (var i=0; i<busStops.length; i++) {
+				var dx = busStops[i].Lng - location.lng();
+				var dy = busStops[i].Lat - location.lat();
+				var distance = dx*dx + dy*dy;
+				if (distance < minDistance) {
+					minDistance = distance;
+					nearestStopIndex = i;
+				}
+			}
+			
+			console.log(busStops[nearestStopIndex]);
+			return busStops[nearestStopIndex];
+	  }
+	  
+	  
+	  
 
 
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBlHt3MCFhoxmt34_LFvx6srKcVtOwH94c&libraries=places&callback=initAutocomplete"
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBlHt3MCFhoxmt34_LFvx6srKcVtOwH94c&libraries=places&callback=initMap"
          async defer></script>
 	
   </body>
