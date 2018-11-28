@@ -43,10 +43,9 @@ function get_api_fpt_bus_stops($lng1, $lat1, $lng2, $lat2) {
     curl_close($ch);
 
     $obj = json_decode($result, TRUE);
-    var_dump($obj);
+    // var_dump($obj);
 
     return $obj;
 }
 
-get_api_fpt_bus_stops(106.68340787887573,10.768808774874774,106.72228231430054,10.786346643944889);
 ?>

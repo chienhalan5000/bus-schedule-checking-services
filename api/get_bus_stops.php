@@ -1,5 +1,7 @@
 <?php
 /**
+ * API get all bus stops information that have a specific route
+ * Method: GET
  * Argument: Route route
  */
 include('../config.php');

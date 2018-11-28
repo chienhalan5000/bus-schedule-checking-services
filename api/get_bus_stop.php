@@ -1,6 +1,8 @@
 <?php
 /**
- * Argument: StopId id of bus stop
+ * API get bus top information by stop id 
+ * Method: GET
+ * Argument: StopId id of bus stop want to get
  */
 include('../config.php');
 
