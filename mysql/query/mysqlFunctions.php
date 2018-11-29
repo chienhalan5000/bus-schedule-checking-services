@@ -1,5 +1,5 @@
 <?php
-include('../../config.php');
+include_once(__DIR__ . "/../../config.php");
 
 function get_bus_stop_by_StopId($id) {
     GLOBAL $CONNECT_SQL;
@@ -25,8 +25,7 @@ function get_bus_stops_by_Route($route) {
     return $arrBusStops;
 }
 
-function get_api_fpt_bus_stops($lng1, $lat1, $lng2, $lat2) {
-    $url ="http://api.openfpt.vn/fbusinfo/businfo/getstopsinbounds/".$lng1."/".$lat1."/".$lng2."/".$lat2."";
+ function get_fpt_api($url) {
     $apiKey = '28ee4e2910b1472a94538e465070f3b3';
     $header = array(
         'api_key:' . $apiKey
@@ -43,9 +42,8 @@ function get_api_fpt_bus_stops($lng1, $lat1, $lng2, $lat2) {
     curl_close($ch);
 
     $obj = json_decode($result, TRUE);
-    // var_dump($obj);
 
     return $obj;
-}
+ }
 
 ?>

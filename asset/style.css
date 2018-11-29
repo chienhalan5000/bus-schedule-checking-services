@@ -151,3 +151,32 @@ width: 345px;
 .marign-img {
     margin: 12px 9px 11px 9px;
 }
+
+.title {
+    font-size: 20px;
+    text-align: center;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.bus {
+    position: relative;
+    color: rgba(0, 0, 0, 0.54);
+    font-size: 13px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e6e6e6;
+    cursor: pointer;
+    -ms-flex: none;
+    flex: none;
+}
+
+b {
+    color: black;
+}
+
+.sub-root {
+    margin-left: 5px;
+}
+
+.sub-chil {
+    margin-left: 20px;
+}

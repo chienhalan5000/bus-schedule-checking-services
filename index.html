@@ -6,9 +6,9 @@
     <title>Bus Map</title>
     <link rel="stylesheet" href="./asset/style.css">
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-    <link rel="stylesheet" href="./bootstrap-3.3.7/css/bootstrap.css">
+    <!-- <link rel="stylesheet" href="./bootstrap-3.3.7/css/bootstrap.css"> -->
   </head>
-    <body>
+    <body style="overflow: hidden">
     <div class="navication" style="font-family: 'Roboto', sans-serif;font-size: 13px">
       <div class="top">
         <div class="widget-directions-travel-mode-switcher">
@@ -33,7 +33,25 @@
             </div>
           </div>
         </div>
-      </div>
+			</div>
+			
+			<div id="content" class="content" style="font-family: 'Roboto', sans-serif;font-size: 13px;height: 563px;overflow: auto;">
+				
+
+				<!-- <div class="bus">
+					<b>* Route: </b>14 <br>
+					<b class="sub-root">- License Plates: </b> 53N3377 <br>
+					<b class="sub-chil">Distance: </b> 205.1229454289012m <br>
+					<b class="sub-chil">Speed: </b> 80km/h <br>
+					<b class="sub-chil">Coming in: </b> 5m <br>
+
+					<b class="sub-root">- License Plates: </b> 53N3377 <br>
+					<b class="sub-chil">Distance: </b> 205.1229454289012m <br>
+					<b class="sub-chil">Speed: </b> 80km/h <br>
+					<b class="sub-chil">Coming in: </b> 5m
+				</div> -->
+						
+			</div>
       
     </div>
   <style>
@@ -342,20 +360,25 @@
 			xmlhttp.send();
 			return result;
 	  }
-	  
-	  	        /**
-      * Ví dụ 1 đoạn để lấy api của t giống y lấy api khác thôi đây là api lấy thông tin bus stop bằng id
-      */
-      // var StopId = 14;
-      // var xmlhttp = new XMLHttpRequest();
-      // var url = '/api/get_bus_stop.php?StopId=' . StopId;
-      // xmlhttp.onreadystatechange = function() {
-			// 	var response = xmlhttp.responseText;
-			// 	var array = JSON.parse(response);
-			// 	console.log(array);
-			// }
-			// xmlhttp.open("GET",url);			
-			// xmlhttp.send();
+
+		/**
+		* input busRoutes: list of string Routes '10,2,4,5,2,1,3'
+		*	busStop id bus Stop
+		*/
+    function get_api_bus_stops(busRoutes, busStop) {
+      var xmlhttp = new XMLHttpRequest();
+      var url = "api/get_useable_bus_stops.php?busRoutes="+busRoutes+"&busStop="+busStop;
+      xmlhttp.onreadystatechange = function() {
+				var response = xmlhttp.responseText;
+				var array = JSON.parse(response);
+				// console.log(array[]);
+				document.getElementById("content").innerHTML = array['data'];
+				
+			}
+			xmlhttp.open("GET",url,true);			
+			xmlhttp.send();
+    }
+		// get_api_bus_stops('10,2,4,5,2,1,3', '14')
 
 	  
 	  var finishedGettingBusStopList;
@@ -613,18 +636,20 @@
 	
 
 	  function getDistance(lng1,lat1,lng2,lat2) {
-		var dx = lng1 - lng2;
-		var dy = lat1 - lat2;
-		return dx*dx + dy*dy;
+      var dx = lng1 - lng2;
+      var dy = lat1 - lat2;
+      return dx*dx + dy*dy;
 	  }
 	  
 	  function toString(object) {
-		return JSON.stringify(object);
+		  return JSON.stringify(object);
 	  }
 	  
 	  function toGoogleLocation(lng,lat) {
-		var location = new LatLng();
+		  var location = new LatLng();
 	  }
+
+    
 		
 
 
