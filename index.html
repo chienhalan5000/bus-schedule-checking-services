@@ -39,8 +39,8 @@
 				
 
 				<!-- <div class="bus">
-					<b>* Route: </b>14 <br>
-					<b class="sub-root">- License Plates: </b> 53N3377 <br>
+					<b>* Address: </b>45 (Đối diện công viên nước Đầm Sen) Hòa Bình <br>
+					<b class="sub-root">- Route: </b> 2 <br>
 					<b class="sub-chil">Distance: </b> 205.1229454289012m <br>
 					<b class="sub-chil">Speed: </b> 80km/h <br>
 					<b class="sub-chil">Coming in: </b> 5m <br>
@@ -379,6 +379,26 @@
 			xmlhttp.send();
     }
 		// get_api_bus_stops('10,2,4,5,2,1,3', '14')
+
+		function render_data(object) {
+			// var object = ["45 (Đối diện công viên nước Đầm Sen) Hòa Bình",[{"number":"69","distance":101.14615503315576,"velocity":8,"eta":30},{"number":"15","distance":445.0626214453854,"velocity":0,"eta":103},{"number":"62","distance":2778.2699725279813,"velocity":9,"eta":705},{"number":"144","distance":3954.494483999321,"velocity":0,"eta":894}]];
+			stringHTML = '<div class="title">List of incoming bus</div>' +
+			'<div class="bus">' +
+				'<b>* Address: </b>'+object['0']+' <br>' 
+
+			object['1'].forEach(element => {
+				stringHTML += '<b class="sub-root">- Route: </b> '+element['number']+' <br>' +
+				'<b class="sub-chil">Distance: </b> '+element['distance']+'m <br>' +
+				'<b class="sub-chil">Speed: </b> '+element['velocity']+'km/h <br>' +
+				'<b class="sub-chil">Coming in: </b> '+element['eta']/60+'m <br>';
+			});
+
+			stringHTML += '</div>';
+
+			document.getElementById("content").innerHTML += stringHTML;
+		}
+
+		// render_data();
 
 	  
 	  var finishedGettingBusStopList;
