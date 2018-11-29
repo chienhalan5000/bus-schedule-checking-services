@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Bus Map</title>
+    <link rel="stylesheet" href="./asset/style.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="./bootstrap-3.3.7/css/bootstrap.css">
+  </head>
+    <body>
+    <div class="navication" style="font-family: 'Roboto', sans-serif;font-size: 13px">
+      <div class="top">
+        <div class="widget-directions-travel-mode-switcher">
+          <img width="24px" height="24px" src="./asset/image/direction.png" alt="Direction" class="marign-img" onclick="Direction()">
+          <img width="24px" height="24px" src="./asset/image/bus.png" alt="Bus" class="marign-img" onclick="Bus()">
+        </div>
+        <div class="widget-directions-waypoints">
+          <div>
+            <div id="direction" class="widget-directions-searchbox-container">
+              <div class="searchbox">
+                  <input id="origin" class="controls tactile-searchbox-input" type="text" placeholder="Origin">
+              </div>
+              <div class="searchbox">
+                  <input id="destination" class="controls tactile-searchbox-input" type="text" placeholder="Destination">
+              </div>
+            </div>
+
+            <div id="bus" class="widget-directions-searchbox-container" style="display: none">
+              <div class="searchbox">
+                  <input id="location_bus" class="controls tactile-searchbox-input" type="text" placeholder="Your location">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  <style>
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #target {
+        width: 345px;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <input id="origin" class="controls" type="text" placeholder="Origin">
+	<input id="destination" class="controls" type="text" placeholder="Destination">
+
+    <div id="map"></div>
+	
+	
+    <script>
+      // This example adds a search box to a map, using the Google Place Autocomplete
+      // feature. People can enter geographical searches. The search box will return a
+      // pick list containing a mix of places and predicted search terms.
+
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+	  var map;
+		
+	  var originMarkers = [];
+	  var destinationMarkers = [];
+	  var bounds;
+	  var originPlaces = [];
+	  var destinationPlaces = [];
+	  
+	  var directionsService;
+
+    var directionsDisplay;
+    
+
+    var directionsDisplay1;
+	  var directionsDisplay2;
+	  var directionsDisplay3;
+	  var iwOriginToBus;
+	  var iwBusToDest;
+	  var iwOriginToDest;
+	  var iwOriginBusNumber;
+	  var iwDestBusNumber;
+
+    function Bus() {
+      $('#direction').css({'display':'none'});
+      $('#bus').css({'display':'block'});
+    }
+
+    function Direction() {
+      $('#bus').css({'display':'none'});
+      $('#direction').css({'display':'block'});
+    }
+	  
+      function initMap() {
+		map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 21.028511, lng: 105.804817},
+          zoom: 13,
+          mapTypeId: 'roadmap'
+        });
+		bounds = new google.maps.LatLngBounds();
+		
+      // Create the starting location search box and link it to the UI element.
+      var inputOrigin = document.getElementById('origin');
+      var originSearchBox = new google.maps.places.SearchBox(inputOrigin);
+      map.controls.push(inputOrigin);
+
+      // Create the destination search box and link it to the UI element.
+      var inputDestination = document.getElementById('destination');
+      var destinationSearchBox = new google.maps.places.SearchBox(inputDestination);
+      map.controls.push(inputDestination);
+	  
+	  // Create the search box for bus schedule
+	  var inputLocation = document.getElementById('location_bus');
+	  var locationSearchBox = new google.maps.places.SearchBox(inputLocation);
+	  map.controls.push(inputLocation);
+	  
+		
+		
+		var lineSymbol = {
+			path: google.maps.SymbolPath.CIRCLE,
+			fillOpacity: 1,
+			scale: 3
+		};
+		var polylineOptions1 = new google.maps.Polyline({
+			strokeColor: '#9f98FF',
+			strokeOpacity: 0,
+			icons: [{
+				icon: lineSymbol,
+				offset: '0',
+				repeat: '10px'
+			}],
+		});
+		var polylineOptions2 = new google.maps.Polyline({
+			strokeColor: '#9f98FF',
+			strokeOpacity: 0,
+			icons: [{
+				icon: lineSymbol,
+				offset: '0',
+				repeat: '10px'
+			}],
+		});
+
+		
+		var rendererOption1 = {
+			map: map,
+			suppressMarkers: false,
+            polylineOptions: polylineOptions1
+		}
+		var rendererOption2 = {
+			map: map,
+			suppressMarkers: false,
+            polylineOptions: polylineOptions2
+		}
+		
+		directionsService = new google.maps.DirectionsService;
+        directionsDisplay1 = new google.maps.DirectionsRenderer(rendererOption1)
+		directionsDisplay2 = new google.maps.DirectionsRenderer(rendererOption2);
+		directionsDisplay3 = new google.maps.DirectionsRenderer;
+		directionsDisplay1.setMap(map);
+		directionsDisplay2.setMap(map);
+		directionsDisplay3.setMap(map);
+			
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener('bounds_changed', function() {
+          originSearchBox.setBounds(map.getBounds());
+		  destinationSearchBox.setBounds(map.getBounds());
+        });
+		
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        originSearchBox.addListener('places_changed', function() {
+          originPlaces = originSearchBox.getPlaces();
+		  console.log(originPlaces[0].id);
+
+          if (originPlaces.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          originMarkers.forEach(function(marker) {
+            marker.setMap(null);
+			console.log('clearing changes');
+          });
+          originMarkers = [];
+
+          // For each place, get the icon, name and location.
+          originPlaces.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(71, 71),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each place.
+            originMarkers.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: place.name,
+              position: place.geometry.location
+            }));
+			
+			var latitude = place.geometry.location.lat();
+			var longitude = place.geometry.location.lng();
+			console.log('Location of ' + place.name + ': ' + latitude + ', ' + longitude);
+          });
+			fitmap([originPlaces[0].geometry.location]);
+			calculateAndDisplayRoute(directionsService,directionsDisplay1,directionsDisplay2,originPlaces[0],destinationPlaces[0]);
+		});
+		
+		destinationSearchBox.addListener('places_changed', function() {
+          destinationPlaces = destinationSearchBox.getPlaces();
+
+          if (destinationPlaces.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          destinationMarkers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          destinationMarkers = [];
+
+          // For each place, get the icon, name and location.
+          destinationPlaces.forEach(function(place) {
+            if (!place.geometry) {
+              console.log("Returned place contains no geometry");
+              return;
+            }
+            var icon = {
+              url: place.icon,
+              size: new google.maps.Size(100, 100),
+              origin: new google.maps.Point(0, 0),
+              anchor: new google.maps.Point(17, 34),
+              scaledSize: new google.maps.Size(25, 25)
+            };
+
+            // Create a marker for each place.
+            destinationMarkers.push(new google.maps.Marker({
+              map: map,
+              icon: icon,
+              title: place.name,
+              position: place.geometry.location
+            }));
+			
+			var latitude = place.geometry.location.lat();
+			var longitude = place.geometry.location.lng();
+			console.log('Location of ' + place.name + ': ' + latitude + ', ' + longitude);
+			});
+			fitmap([destinationPlaces[0].geometry.location]);
+			calculateAndDisplayRoute(directionsService,directionsDisplay1,directionsDisplay2,originPlaces[0],destinationPlaces[0]);
+        });
+		
+		
+		
+		//***************************			LOCATION SEARCH BOX FOR BUS TIME SCHEDULE 		****************************
+		var markers = []
+		locationSearchBox.addListener('places_changed', function() {
+			var places = locationSearchBox.getPlaces();
+			if (places.length==0) return;
+			
+			markers.forEach(function(marker) {
+				marker.setMap(null);
+			});
+			markers = [];
+			
+			var bounds = new google.maps.LatLngBounds();
+			places.forEach(function(place) {
+				if (!place.geometry) {
+					console.log("Returned place contains no geometry");
+					return;
+				}
+				var icon = {
+					url: place.icon,
+					size: new google.maps.Size(71, 71),
+					origin: new google.maps.Point(0, 0),
+					anchor: new google.maps.Point(17, 34),
+					scaledSize: new google.maps.Size(25, 25)
+				};
+
+				// Create a marker for each place.
+				markers.push(new google.maps.Marker({
+					map: map,
+					icon: icon,
+					title: place.name,
+					position: place.geometry.location
+				}));
+
+				if (place.geometry.viewport) {
+					// Only geocodes have viewport.
+					bounds.union(place.geometry.viewport);
+					} else {
+					bounds.extend(place.geometry.location);
+					}
+				});
+			map.fitBounds(bounds);
+			getIncomingBuses(places[0].geometry.location);
+		});
+      }	
+	  
+	function fitmap(locations) {
+		bounds = new google.maps.LatLngBounds();
+		locations.forEach(function(location) {
+			if (location!=null) bounds.extend(location);
+		});
+		map.fitBounds(bounds);
+	}
+	  
+	  	// location: place.geometry.location: bao gồm location.lat() và location.lng()
+	function findNearBusStop(location) {
+			var range = 0.036506043;
+			var topLat = location.lat() - range;
+			var topLng = location.lng() - range;
+			var botLat = location.lat() + range;
+			var botLng = location.lng() + range;
+			var result = null;
+			
+			// thay đoạn này = get bus stop API từ input 4 điểm
+			// var url = 'http://api.openfpt.vn/fbusinfo/businfo/getstopsinbounds/' + topLng + '/' + topLat + '/' + botLng + '/' + botLat;
+			xmlhttp = new XMLHttpRequest();
+			var url = 'https://cors-anywhere.herokuapp.com/http://api.openfpt.vn/fbusinfo/businfo/getstopsinbounds/' + topLng + '/' + topLat + '/' + botLng + '/' + botLat;
+			xmlhttp.open("GET",url,false);			
+			xmlhttp.setRequestHeader("api-key","28ee4e2910b1472a94538e465070f3b3");
+			xmlhttp.onreadystatechange = function() {
+				var response = xmlhttp.responseText;
+				var array = JSON.parse(response);
+				console.log("Array length = " + array.length);
+			//	console.log('findNearBusStop response: ' + response);
+				result = array;
+			}
+			xmlhttp.send();
+			return result;
+	  }
+	  
+	  	        /**
+      * Ví dụ 1 đoạn để lấy api của t giống y lấy api khác thôi đây là api lấy thông tin bus stop bằng id
+      */
+      // var StopId = 14;
+      // var xmlhttp = new XMLHttpRequest();
+      // var url = '/api/get_bus_stop.php?StopId=' . StopId;
+      // xmlhttp.onreadystatechange = function() {
+			// 	var response = xmlhttp.responseText;
+			// 	var array = JSON.parse(response);
+			// 	console.log(array);
+			// }
+			// xmlhttp.open("GET",url);			
+			// xmlhttp.send();
+
+	  
+	  var finishedGettingBusStopList;
+	  function findNearestBusStop(location) {		
+			var busStops = findNearBusStop(location);
+//			console.log('Bus stops list: ' + busStops);
+
+			var minDistance = 1000000000;
+			var nearestStopIndex = 0;
+			
+			for (var i=0; i<busStops.length; i++) {
+				var dx = busStops[i].Lng - location.lng();
+				var dy = busStops[i].Lat - location.lat();
+				var distance = dx*dx + dy*dy;
+				if (distance < minDistance) {
+					minDistance = distance;
+					nearestStopIndex = i;
+				}
+			}
+			
+			console.log(busStops[nearestStopIndex]);
+			
+			return busStops[nearestStopIndex];
+	  }
+	  
+
+	  
+	  // origin, desnation: type google.place
+	  // output: [busId, busStop tại điểm đi, busStop tại điểm đến]
+	  function findBusStopToUse(origin,destination) {
+			var bsNearOrigin = findNearBusStop(origin.geometry.location);
+			var bsNearDest = findNearBusStop(destination.geometry.location);
+			console.log('BsNearOrigin: ' + JSON.stringify(bsNearOrigin[0]));
+			console.log('bsNearDest: ' + JSON.stringify(bsNearDest[0]));
+				
+			var distToOrigin = {}; var bestOriginBs = {};
+			var distToDest = {}; var bestDestBs = {};
+			
+			for (var i=0; i<bsNearOrigin.length; i++) {
+				var currentBusStop = bsNearOrigin[i];
+				var busNumbers = currentBusStop.Routes;
+				busNumbers = busNumbers.split(" ").join();
+				var buses = busNumbers.split(',');
+				
+				for (var j=0; j<buses.length; j++) {
+					var busId = buses[j];
+					var currentDistToOrigin = getDistance(currentBusStop.Lng,currentBusStop.Lat,origin.geometry.location.lng(),origin.geometry.location.lat());
+					if (!(busId in distToOrigin) || currentDistToOrigin < distToOrigin[busId]) {
+						distToOrigin[busId] = currentDistToOrigin; 
+						bestOriginBs[busId] = currentBusStop;
+					}
+				}
+			}
+			
+			for (var i=0; i<bsNearDest.length; i++) {
+				var currentBusStop = bsNearDest[i];
+				var busNumbers = currentBusStop.Routes;
+				busNumbers = busNumbers.split(" ").join();
+				var buses = busNumbers.split(',');
+				
+				for (var j=0; j<buses.length; j++) {
+					var busId = buses[j];
+					var currentDistToDest = getDistance(currentBusStop.Lng,currentBusStop.Lat,destination.geometry.location.lng(),destination.geometry.location.lat());
+					if (!(busId in distToDest) || currentDistToDest < distToDest[busId]) {
+						distToDest[busId] = currentDistToDest;
+						bestDestBs[busId] = currentBusStop;
+					}
+				}
+			}
+			
+			var bestDistance = 1000000000;
+			var bestBusId = 0;
+			var listOfUsableBus = [];
+			for (var key in distToOrigin) {
+				var busId = key;
+				if (!(busId in distToDest)) continue;
+				if (busId.length==0) continue;
+				listOfUsableBus.push(busId);
+				
+				var totalDistance = distToOrigin[key] + distToDest[key];
+				if (totalDistance < bestDistance) {
+					bestDistance = totalDistance;
+					bestBusId = busId;
+					console.log('Bus id = /' + busId + '\'');
+				}
+			}
+			
+			console.log('Best bus id = ' + bestBusId);
+			console.log('bestOriginBs = ' + toString(bestOriginBs[bestBusId]));
+			console.log('bestDestBs = ' + toString(bestDestBs[bestBusId]));
+			return [bestBusId, bestOriginBs[bestBusId], bestDestBs[bestBusId], listOfUsableBus];
+	  }
+	  
+	  
+	  function calculateAndDisplayRoute(directionsService, directionsDisplay1, directionsDisplay2, origin, destination) {
+	    if (origin==null) {console.log('No starting location'); return;}
+		if (destination==null) {console.log('No destination'); return;}
+		
+		iwOriginToBus = null;
+		iwBusToDest = null;
+		iwOriginToDest = null;		
+		
+		var temp = findBusStopToUse(originPlaces[0],destinationPlaces[0]);
+		var busId = temp[0];
+		var originBs = temp[1];
+		var destBs = temp[2];
+		var listOfUsableBus = temp[3];
+		console.log('Usable bus: ' + listOfUsableBus);
+		
+		var originBsLocation = {lat: originBs.Lat, lng: originBs.Lng};
+		var destBsLocation = {lat: destBs.Lat, lng: destBs.Lng};
+		
+		var requestTotalPath = {
+			origin: origin.geometry.location,
+			destination: destination.geometry.location,
+			travelMode: 'TRANSIT',
+			transitOptions: {
+				modes: ['BUS']
+			},
+			provideRouteAlternatives: true,
+			unitSystem: google.maps.UnitSystem.METRIC
+		}
+		directionsService.route(requestTotalPath, function(response, status) {
+          if (status === 'OK') {
+		    routes = response.routes;						
+            directionsDisplay3.setDirections(response);
+			iwOriginToDest = getRouteInfoWindow(directionsDisplay3,0.4,3);
+			fitmap([origin.geometry.location,destination.geometry.location,originBsLocation,destBsLocation]);
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+		
+		var requestPathFromOrigin = {
+			origin: origin.geometry.location,
+			destination: originBsLocation,
+			travelMode: 'WALKING',
+			provideRouteAlternatives: true,
+			unitSystem: google.maps.UnitSystem.METRIC
+		}
+        directionsService.route(requestPathFromOrigin, function(response, status) {
+          if (status === 'OK') {
+		    routes = response.routes;
+            directionsDisplay1.setDirections(response);
+			iwOriginToBus = getRouteInfoWindow(directionsDisplay1,0.4,1);
+			iwOriginBusNumber = getBusNumberInfoWindow(busId,originBsLocation,1);
+			fitmap([origin.geometry.location,destination.geometry.location,originBsLocation,destBsLocation]);
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+		
+		var requestPathFromDest = {
+			origin: destBsLocation,
+			destination: destination.geometry.location,
+			travelMode: 'WALKING',
+			provideRouteAlternatives: true,
+			unitSystem: google.maps.UnitSystem.METRIC
+		}
+		 directionsService.route(requestPathFromDest, function(response, status) {
+          if (status === 'OK') {
+		    routes = response.routes;
+            directionsDisplay2.setDirections(response);
+			iwBusToDest = getRouteInfoWindow(directionsDisplay2,0.4,2);
+			iwDestBusNumber = getBusNumberInfoWindow(busId,destBsLocation,0);
+			fitmap([origin.geometry.location,destination.geometry.location,originBsLocation,destBsLocation]);
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+		fitmap([origin.geometry.location,destination.geometry.location,originBsLocation,destBsLocation]);
+      }
+	  
+	function getTotalDuration(directionsDisplay) {
+      var directionsResult = directionsDisplay.getDirections();
+      var route = directionsResult.routes[0];
+      var totalDuration = 0;
+      var legs = route.legs;
+      for(var i=0; i<legs.length; ++i) {
+        totalDuration += legs[i].duration.value;
+      }
+      return totalDuration;
+    }
+
+    function getTotalDistance(directionsDisplay) {
+      var directionsResult = directionsDisplay.getDirections();
+      var route = directionsResult.routes[0];
+      var totalDistance = 0;
+      var legs = route.legs;
+      for(var i=0; i<legs.length; ++i) {
+        totalDistance += legs[i].distance.value;
+      }
+      return totalDistance;
+    }
+    //  Returns a point along a route; at a requested distance ( either absolute (in meter) or as a ratio (0 to 1)  of the route)
+    //     example : you have a random route ( 100km long), and you want to put a marker, 30km from the origin.
+    //     we add the distances of the waypoints and stop when we reach the requested total length.
+    //     nothing stops you from making it even more precise by interpolling.
+    // the function returns a location (LatLng) along the route
+    function distanceAlongPath(directionsDisplay, distanceFromOrigin, ratioFromOrigin) {
+      var directionsResult = directionsDisplay.getDirections();
+      var route = directionsResult.routes[0];
+      var totalDistance = getTotalDistance(directionsDisplay);
+      var tempDistanceSum = 0;
+      var dist = 0;
+
+      if(ratioFromOrigin) {
+        distanceFromOrigin = ratioFromOrigin * totalDistance;
+      }
+
+      // we prepare the object 
+      var result = new Object();
+      result.routes = new Array();
+      result.routes[0] = route;
+      for(var i in result.routes[0].overview_path) {
+        if (i>0) {
+          dist = google.maps.geometry.spherical.computeDistanceBetween (result.routes[0].overview_path[i], result.routes[0].overview_path[i - 1]);
+        }
+        tempDistanceSum += dist;
+        if (tempDistanceSum > distanceFromOrigin) {
+          return result.routes[0].overview_path[i];
+        } 
+        // console.log(dist+' '+tempDistanceSum);
+      }
+    }
+	
+	function getRouteInfoWindow(directionsDisplay,ratioAlongPath,type) {
+		var point = distanceAlongPath(directionsDisplay,null,ratioAlongPath);
+		var content;
+		if (type==1) content = 'Walking from starting location to bus stop';
+		else if (type==2) content = 'Walking from bus stop to destination';
+		else if (type==3) content = 'Walking directly from starting location to destination';
+		content = content + '<br/>total distance: ' + getTotalDistance(directionsDisplay) + 'm <br/> total duration: ' + getTotalDuration(directionsDisplay) +'s';
+		return new google.maps.InfoWindow({
+	        content: content,
+			map: map,
+			position: point
+		});
+	}
+	
+	function getBusNumberInfoWindow(busNumber,location,type) {
+		var point = location;
+		var content;
+		console.log('Bus number = ' + busNumber);
+		if (type==1) content = 'Take bus number ' + busNumber;
+		else content = 'Get off the bus';
+		return new google.maps.InfoWindow({
+			content: content,
+			map: map,
+			position: point
+		});
+	}
+	
+	function getIncomingBusesAPI(location) {
+		var busStop = findNearestBusStop(location);
+		console.log(toString(busStop));
+		
+		xmlhttp = new XMLHttpRequest();
+		var url = 'https://cors-anywhere.herokuapp.com/http://api.openfpt.vn/fbusinfo/prediction/predictbystopid/' + busStop.StopId;
+		xmlhttp.open("GET",url,false);			
+		xmlhttp.setRequestHeader("api-key","28ee4e2910b1472a94538e465070f3b3");
+		xmlhttp.onreadystatechange = function() {
+			var response = xmlhttp.responseText;
+			var array = JSON.parse(response);
+			console.log("Array length = " + array.length);
+			console.log('get incoming buses response: ' + response);
+			result = array;
+		}
+		xmlhttp.send();
+		return [result,busStop];
+	}
+	
+	function getIncomingBuses(location) {
+		var temp = getIncomingBusesAPI(location);
+		var busRouteList = temp[0];
+		var busStop = temp[1];
+		var incomingBuses = [];
+		
+		for (var i=0; i<busRouteList.length; i++ ) {
+			var buses = busRouteList[i].arrs;
+			var nearestBus = null;
+			var nearestBusEta = 1000000000;
+			
+			for (var j=0; j<buses.length; j++) {
+				var bus = buses[j];
+				if (bus.t < nearestBusEta) {
+					nearestBusEta = bus.t;
+					nearestBus = bus;
+				}
+			}
+			
+			incomingBuses.push({number: busRouteList[i].rNo, distance: nearestBus.d, velocity: nearestBus.s, eta: nearestBus.t});
+		}
+		
+		var busAddress = busStop.AddressNo + ' ' + busStop.Street;
+		console.log([busAddress, toString(incomingBuses)]);
+		return [busAddress, incomingBuses];
+	}
+
+	
+
+	  function getDistance(lng1,lat1,lng2,lat2) {
+		var dx = lng1 - lng2;
+		var dy = lat1 - lat2;
+		return dx*dx + dy*dy;
+	  }
+	  
+	  function toString(object) {
+		return JSON.stringify(object);
+	  }
+	  
+	  function toGoogleLocation(lng,lat) {
+		var location = new LatLng();
+	  }
+		
+
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBlHt3MCFhoxmt34_LFvx6srKcVtOwH94c&libraries=places&callback=initMap"
+         async defer></script>
+  
+    <script type="text/javascript" src="./asset/jquery-3.3.1.min.js" ></script>
+    <script type="text/javascript" src="./asset/functions.js" ></script>
+  </body>
+</html>
